@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cash Flow — London Job Search Runway</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #F7F5F0; --bg2: #EDEAE3; --bg3: #fff;
+  --border: #D8D4CB; --text: #1A1814; --muted: #6B6760;
+  --green: #1A7A5E; --green-bg: #E6F2EE;
+  --amber: #9B6010; --amber-bg: #FDF2E0;
+  --red: #B83A2A; --red-bg: #FAEAE7;
+  --blue: #1A4A7A; --blue-bg: #E6EDF7;
+  --teal: #0E7490; --teal-bg: #E0F5F9;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+.header { padding: 1.75rem 2rem 1.1rem; border-bottom: 1px solid var(--border); background: var(--bg3); }
+.header h1 { font-family: 'DM Serif Display', serif; font-size: 22px; font-weight: 400; margin-bottom: 4px; }
+.header p { font-size: 13px; color: var(--muted); }
+
+.content { padding: 1.5rem 2rem; max-width: 940px; }
+
+/* Controls */
+.ctrl-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--bg2); border-radius: var(--radius); border: 1px solid var(--border); }
+.cg { display: flex; flex-direction: column; gap: 5px; }
+.cl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+select, input[type=number] { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
+select { min-width: 220px; }
+input[type=number] { width: 100px; }
+
+/* Travel banner */
+.travel-banner { display: none; background: var(--teal-bg); border: 1px solid #99D6E4; border-radius: var(--radius); padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; font-size: 13px; color: var(--teal); }
+.travel-banner strong { font-weight: 600; }
+
+/* Metrics */
+.metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(138px,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.metric { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; }
+.metric .ml { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px; }
+.metric .mv { font-size: 20px; font-weight: 500; }
+.pos { color: var(--green) !important; } .neg { color: var(--red) !important; } .warn { color: var(--amber) !important; }
+
+/* Legend */
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 0.85rem; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* Chart */
+.chart-wrap { position: relative; width: 100%; height: 270px; margin-bottom: 6px; }
+.chart-note { font-size: 12px; color: var(--muted); margin-bottom: 1.5rem; }
+
+/* Section head */
+.sh { font-family: 'DM Serif Display', serif; font-size: 17px; font-weight: 400; margin-bottom: 0.85rem; margin-top: 1.5rem; }
+
+/* Table */
+.tbl-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); background: var(--bg2); }
+td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr.pa td { background: #E6F2EE22; }
+tr.pb td { background: #FDF2E022; }
+tr.pc td { background: #E6EDF722; }
+tr.pt-perm td { background: #E0F5F922; }
+tr.dep td { background: #FAEAE740; color: var(--red); }
+tr.travel-row td { background: #E0F5F940; }
+
+.pill { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 99px; font-weight: 600; white-space: nowrap; }
+.pill-a { background: var(--green-bg); color: var(--green); }
+.pill-b { background: var(--amber-bg); color: var(--amber); }
+.pill-c { background: var(--blue-bg); color: var(--blue); }
+.pill-d { background: var(--red-bg); color: var(--red); }
+.pill-e { background: var(--teal-bg); color: var(--teal); }
+
+.net-pos { color: var(--green); font-weight: 500; }
+.net-neg { color: var(--red); font-weight: 500; }
+.bal-low { color: var(--amber); }
+.bal-ok { color: var(--text); }
+.travel-flag { color: var(--teal); font-weight: 600; }
+
+@media (max-width: 600px) {
+  .content { padding: 1rem; }
+  .header { padding: 1.25rem 1rem 1rem; }
+  select { min-width: 160px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Cash Flow Planner</h1>
+  <p>London job search runway · starting May 2026 · part-time contract ends Jun 2026</p>
+</div>
+
+<div class="content">
+  <div style="height:0.5rem"></div>
+
+  <div class="ctrl-bar">
+    <div class="cg">
+      <div class="cl">Income scenario</div>
+      <select id="sc" onchange="render()">
+        <option value="0">No income from start</option>
+        <option value="1" selected>Part-time → Jun 2026, then no income</option>
+        <option value="2">Part-time → Jun 2026, then temp full-time</option>
+        <option value="3">Part-time contract becomes permanent</option>
+      </select>
+    </div>
+    <div class="cg">
+      <div class="cl">Savings base</div>
+      <select id="sv" onchange="render()">
+        <option value="7850">Cash only — £7,850</option>
+        <option value="11643" selected>Total savings — £11,643</option>
+        <option value="16574">Incl. equity — £16,574</option>
+      </select>
+    </div>
+    <div class="cg">
+      <div class="cl">Monthly spend</div>
+      <select id="sp" onchange="render()">
+        <option value="1189">Lean — £1,189/mo</option>
+        <option value="1389" selected>Current — £1,389/mo</option>
+        <option value="1589">Relaxed — £1,589/mo</option>
+      </select>
+    </div>
+    <div class="cg">
+      <div class="cl">Monthly invest</div>
+      <select id="inv" onchange="render()">
+        <option value="0">£0 (none)</option>
+        <option value="50">£50/mo</option>
+        <option value="100" selected>£100/mo</option>
+        <option value="150">£150/mo</option>
+      </select>
+    </div>
+    <div class="cg">
+      <div class="cl">Horizon</div>
+      <select id="mo" onchange="render()">
+        <option value="12">12 months</option>
+        <option value="18" selected>18 months</option>
+        <option value="24">24 months</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Travel expense row -->
+  <div class="ctrl-bar" style="background:var(--teal-bg);border-color:#99D6E4;">
+    <div class="cg">
+      <div class="cl" style="color:var(--teal);">✈ One-off travel expense</div>
+      <select id="travel-month" onchange="render()">
+        <option value="-1">No travel planned</option>
+        <!-- populated by JS -->
+      </select>
+    </div>
+    <div class="cg">
+      <div class="cl" style="color:var(--teal);">Trip budget (£)</div>
+      <input type="number" id="travel-cost" value="750" min="0" max="5000" step="50" onchange="render()" oninput="render()">
+    </div>
+    <div style="align-self:flex-end;font-size:12px;color:var(--teal);max-width:260px;line-height:1.5;">
+      Enter trip cost &amp; month — impact shows highlighted in the table and chart below.
+    </div>
+  </div>
+
+  <div class="travel-banner" id="travel-banner"></div>
+
+  <div class="metric-row" id="metrics"></div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#1A7A5E"></div>Part-time income</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#9B6010"></div>No income</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#1A4A7A"></div>Temp full-time</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#0E7490"></div>Permanent PT</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#B83A2A"></div>Depleted</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#9B6EBF;opacity:0.8"></div>Portfolio value</div>
+  </div>
+
+  <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  <p class="chart-note" id="chart-note"></p>
+
+  <div class="sh">Month-by-month detail</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Phase</th>
+          <th>Income</th>
+          <th>Spend</th>
+          <th>Travel</th>
+          <th>Invest</th>
+          <th>Net</th>
+          <th>Cash balance</th>
+          <th>Portfolio</th>
+          <th>Flag</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const START_M = 4, START_Y = 2026;
+const BLEND = 0.097;
+
+function cal(i) {
+  const a = START_M + i;
+  return { m: a % 12, y: START_Y + Math.floor(a / 12) };
+}
+function ml(i) {
+  const { m, y } = cal(i);
+  return MN[m] + ' ' + y;
+}
+
+// Populate travel month dropdown
+const travelSel = document.getElementById('travel-month');
+for (let i = 0; i < 24; i++) {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = ml(i);
+  if (ml(i) === 'Jun 2026') opt.selected = true; // default to June for Scotland
+  travelSel.appendChild(opt);
+}
+// Reset to "no travel" as default
+travelSel.value = -1;
+
+function getPhase(i, sc) {
+  const { m, y } = cal(i);
+  const beforeJul26 = y < 2026 || (y === 2026 && m <= 5);
+  if (sc === 0) return 'none';
+  if (sc === 1) return beforeJul26 ? 'pt' : 'none';
+  if (sc === 2) return beforeJul26 ? 'pt' : 'ft';
+  if (sc === 3) return 'pt-perm'; // permanent PT throughout
+  return 'none';
+}
+
+function getIncome(ph) {
+  if (ph === 'pt') return 1020;
+  if (ph === 'pt-perm') return 1020;
+  if (ph === 'ft') return 2200;
+  return 0;
+}
+
+const phCol = { pt: '#1A7A5E', none: '#9B6010', ft: '#1A4A7A', 'pt-perm': '#0E7490' };
+const phCls = { pt: 'pa', none: 'pb', ft: 'pc', 'pt-perm': 'pt-perm' };
+const phPill = {
+  pt: '<span class="pill pill-a">Part-time</span>',
+  none: '<span class="pill pill-b">No income</span>',
+  ft: '<span class="pill pill-c">Temp FT</span>',
+  'pt-perm': '<span class="pill pill-e">PT Permanent</span>'
+};
+
+let ch = null;
+
+function render() {
+  const sc   = +document.getElementById('sc').value;
+  const sv   = +document.getElementById('sv').value;
+  const sp   = +document.getElementById('sp').value;
+  const inv  = +document.getElementById('inv').value;
+  const mo   = +document.getElementById('mo').value;
+  const tMo  = +document.getElementById('travel-month').value;
+  const tCost = tMo >= 0 ? Math.max(0, +document.getElementById('travel-cost').value) : 0;
+  const mr   = Math.pow(1 + BLEND, 1 / 12) - 1;
+
+  const rows = [];
+  let bal = sv, dep = false, depMo = '', port = 1920;
+
+  for (let i = 0; i < mo; i++) {
+    const ph = getPhase(i, sc);
+    const inc = getIncome(ph);
+    const travel = (i === tMo) ? tCost : 0;
+    const net = inc - sp - inv - travel;
+    bal = Math.round(bal + net);
+    port = Math.round((port + inv) * (1 + mr));
+    if (bal <= 0 && !dep) { dep = true; depMo = ml(i); bal = 0; }
+    rows.push({ i, label: ml(i), ph, inc, sp, travel, inv, net, bal, isDep: bal <= 0, port });
+  }
+
+  // Metrics
+  const fb = rows[rows.length - 1].bal;
+  const fp = rows[rows.length - 1].port;
+  const ti = rows.reduce((s, r) => s + r.inc, 0);
+  const ts = sp * mo + tCost;
+  const tn = ti - ts - inv * mo;
+  const fd = rows.findIndex(r => r.isDep);
+  const rw = dep ? fd + ' mo' : '>' + mo + ' mo';
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric"><div class="ml">Starting savings</div><div class="mv">£${sv.toLocaleString()}</div></div>
+    <div class="metric"><div class="ml">Cash balance (end)</div><div class="mv ${fb > 2000 ? 'pos' : fb > 0 ? '' : 'neg'}">£${fb.toLocaleString()}</div></div>
+    <div class="metric"><div class="ml">Portfolio value (end)</div><div class="mv pos">£${fp.toLocaleString()}</div></div>
+    <div class="metric"><div class="ml">Runway</div><div class="mv">${rw}</div></div>
+    <div class="metric"><div class="ml">Total income</div><div class="mv pos">£${ti.toLocaleString()}</div></div>
+    <div class="metric"><div class="ml">Net cash flow</div><div class="mv ${tn >= 0 ? 'pos' : 'neg'}">${tn >= 0 ? '+' : ''}£${tn.toLocaleString()}</div></div>
+  `;
+
+  // Travel banner
+  const banner = document.getElementById('travel-banner');
+  if (tCost > 0 && tMo >= 0) {
+    banner.style.display = 'block';
+    const normalMonthEnd = sv + rows.slice(0, tMo).reduce((s, r) => s + (r.inc - r.sp - r.inv), 0);
+    const travelMonthEnd = normalMonthEnd + (rows[tMo] ? rows[tMo].inc : 0) - sp - inv - tCost;
+    banner.innerHTML = `✈ <strong>Scotland trip in ${ml(tMo)}:</strong> £${tCost.toLocaleString()} one-off cost reduces that month's cash balance by £${tCost.toLocaleString()} vs no-travel baseline. Your overall runway shortens by approximately <strong>${Math.round(tCost / sp * 30)} days</strong>.`;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  // Chart colours
+  const barColours = rows.map(r => r.isDep ? '#B83A2A' : phCol[r.ph]);
+  const barColsAlpha = barColours.map(c => c + '99');
+
+  // Travel annotation dataset — spike the travel month
+  const travelSpike = rows.map((r, i) => i === tMo && tCost > 0 ? -tCost : null);
+
+  if (ch) ch.destroy();
+  ch = new Chart(document.getElementById('chart'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.label),
+      datasets: [
+        {
+          type: 'line', label: 'Cash balance',
+          data: rows.map(r => r.bal),
+          borderColor: '#888880', borderWidth: 1.5, borderDash: [4, 3],
+          pointBackgroundColor: barColours, pointRadius: 3, tension: 0.3, fill: false, yAxisID: 'y'
+        },
+        {
+          type: 'line', label: 'Portfolio',
+          data: rows.map(r => r.port),
+          borderColor: '#9B6EBF', borderWidth: 1.5,
+          pointRadius: 0, tension: 0.4, fill: false, yAxisID: 'y'
+        },
+        {
+          type: 'bar', label: 'Monthly net',
+          data: rows.map(r => r.net),
+          backgroundColor: barColsAlpha,
+          yAxisID: 'y2', borderRadius: 2,
+          barThickness: mo <= 12 ? 18 : mo <= 18 ? 13 : 9
+        },
+        {
+          type: 'bar', label: 'Travel cost',
+          data: travelSpike,
+          backgroundColor: '#0E749099',
+          yAxisID: 'y2', borderRadius: 2,
+          barThickness: mo <= 12 ? 18 : mo <= 18 ? 13 : 9
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { font: { size: 11, family: 'DM Sans' }, boxWidth: 12, padding: 14 } },
+        tooltip: {
+          callbacks: {
+            label: c => {
+              if (c.dataset.label === 'Cash balance') return 'Cash: £' + Math.round(c.raw).toLocaleString();
+              if (c.dataset.label === 'Portfolio')     return 'Portfolio: £' + Math.round(c.raw).toLocaleString();
+              if (c.dataset.label === 'Travel cost')   return 'Travel: −£' + Math.abs(Math.round(c.raw)).toLocaleString();
+              return 'Net: ' + (c.raw >= 0 ? '+' : '') + '£' + Math.round(c.raw).toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 }, color: '#6B6760', autoSkip: true, maxRotation: 45 }, grid: { display: false } },
+        y: {
+          position: 'left',
+          ticks: { font: { size: 10 }, color: '#6B6760', callback: v => '£' + (v / 1000).toFixed(0) + 'k' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          title: { display: true, text: 'Balance', font: { size: 10 }, color: '#6B6760' }
+        },
+        y2: {
+          position: 'right',
+          ticks: { font: { size: 10 }, color: '#6B6760', callback: v => (v >= 0 ? '+' : '') + '£' + Math.round(v) },
+          grid: { display: false },
+          title: { display: true, text: 'Net / mo', font: { size: 10 }, color: '#6B6760' }
+        }
+      }
+    }
+  });
+
+  document.getElementById('chart-note').textContent = dep
+    ? `Cash runs out in ${depMo} under this scenario.${tCost > 0 ? ' Travel adds £' + tCost.toLocaleString() + ' one-off cost in ' + ml(tMo) + '.' : ''}`
+    : `Cash stays positive throughout the ${mo}-month window. Portfolio grows to £${fp.toLocaleString()}.${tCost > 0 ? ' Travel spike visible in ' + ml(tMo) + '.' : ''}`;
+
+  // Table
+  const tbody = rows.map(r => {
+    const rowCls = r.isDep ? 'dep' : r.travel > 0 ? 'travel-row' : phCls[r.ph];
+    const netStr = (r.net >= 0 ? '+' : '−') + '£' + Math.abs(r.net).toLocaleString();
+    const netCls = r.net >= 0 ? 'net-pos' : 'net-neg';
+    const balCls = r.bal < 1500 && r.bal > 0 ? 'bal-low' : 'bal-ok';
+    const travelCell = r.travel > 0
+      ? `<span class="travel-flag">−£${r.travel.toLocaleString()}</span>`
+      : '<span style="color:var(--muted)">—</span>';
+    const flag = r.isDep
+      ? '<span class="pill pill-d">depleted</span>'
+      : r.bal < 1500 && r.bal > 0
+        ? '<span class="pill pill-b">low</span>'
+        : r.travel > 0
+          ? '<span class="pill pill-e">✈ travel</span>'
+          : '';
+    return `<tr class="${rowCls}">
+      <td>${r.label}</td>
+      <td>${phPill[r.ph]}</td>
+      <td>£${r.inc.toLocaleString()}</td>
+      <td>£${r.sp.toLocaleString()}</td>
+      <td>${travelCell}</td>
+      <td>£${r.inv}</td>
+      <td class="${netCls}">${netStr}</td>
+      <td class="${balCls}">£${r.bal.toLocaleString()}</td>
+      <td class="pos">£${r.port.toLocaleString()}</td>
+      <td>${flag}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tbody').innerHTML = tbody;
+}
+
+render();
+</script>
+</body>
+</html>

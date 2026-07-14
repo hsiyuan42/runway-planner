@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investment Planner — London Job Search Runway</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #F7F5F0;
+  --bg2: #EDEAE3;
+  --bg3: #fff;
+  --border: #D8D4CB;
+  --text: #1A1814;
+  --muted: #6B6760;
+  --green: #1A7A5E;
+  --green-bg: #E6F2EE;
+  --amber: #9B6010;
+  --amber-bg: #FDF2E0;
+  --red: #B83A2A;
+  --red-bg: #FAEAE7;
+  --blue: #1A4A7A;
+  --blue-bg: #E6EDF7;
+  --purple: #5A3A8A;
+  --purple-bg: #EEE8F7;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+.header { padding: 2rem 2rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--bg3); }
+.header h1 { font-family: 'DM Serif Display', serif; font-size: 22px; font-weight: 400; margin-bottom: 4px; }
+.header p { font-size: 13px; color: var(--muted); }
+
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg3); padding: 0 2rem; }
+.tab { font-size: 13px; font-weight: 500; padding: 0.75rem 1.25rem; border: none; background: none; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+.content { padding: 1.5rem 2rem; max-width: 900px; }
+.view { display: none; } .view.active { display: block; }
+
+/* Controls */
+.ctrl-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--bg2); border-radius: var(--radius); border: 1px solid var(--border); }
+.cg { display: flex; flex-direction: column; gap: 5px; }
+.cl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+select, input[type=range] { font-family: 'DM Sans', sans-serif; font-size: 13px; }
+select { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
+.sr { display: flex; align-items: center; gap: 10px; }
+.sr input[type=range] { width: 120px; accent-color: var(--text); }
+.sv { font-size: 14px; font-weight: 600; min-width: 48px; }
+
+/* Metrics */
+.metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.metric { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; }
+.metric .ml { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px; }
+.metric .mv { font-size: 20px; font-weight: 500; }
+.pos { color: var(--green) !important; } .neg { color: var(--red) !important; } .warn { color: var(--amber) !important; }
+
+/* Charts */
+.chart-wrap { position: relative; width: 100%; height: 260px; margin-bottom: 6px; }
+.chart-note { font-size: 12px; color: var(--muted); margin-bottom: 1.5rem; }
+
+/* Section headings */
+.sh { font-family: 'DM Serif Display', serif; font-size: 17px; font-weight: 400; margin-bottom: 0.85rem; }
+
+/* Cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.card { border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; background: var(--bg3); }
+.card .ct { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 6px; }
+.card .cb { font-size: 22px; font-weight: 500; line-height: 1.1; }
+.card .cs { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* Allocation bar */
+.alloc-bar { display: flex; height: 14px; border-radius: 6px; overflow: hidden; margin: 10px 0 8px; }
+.leg { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 1rem; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* Impact table */
+.impact-box { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; }
+.impact-row { display: flex; justify-content: space-between; padding: 10px 1.25rem; border-bottom: 1px solid var(--border); font-size: 13px; }
+.impact-row:last-child { border-bottom: none; }
+.ir-l { color: var(--muted); } .ir-r { font-weight: 500; }
+
+/* Info boxes */
+.ibox { background: var(--bg2); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 13px; line-height: 1.7; border-left: 3px solid var(--border); }
+.ibox h4 { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+.ibox p { color: var(--muted); margin-bottom: 4px; }
+.ibox p:last-child { margin-bottom: 0; }
+
+/* Layers */
+.layers { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem; }
+.layer { border-radius: 0 var(--radius) var(--radius) 0; padding: 1rem 1.25rem; }
+.layer .lt { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+.layer .ld { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* Summary table */
+.sum-box { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; }
+.sum-row { display: flex; justify-content: space-between; padding: 10px 1.25rem; border-bottom: 1px solid var(--border); font-size: 13px; }
+.sum-row:last-child { border-bottom: none; }
+.sum-row.total { background: var(--bg2); }
+.sr-l { color: var(--muted); } .sr-r { font-weight: 500; }
+
+@media (max-width: 600px) {
+  .content { padding: 1rem; }
+  .header { padding: 1.25rem 1rem 1rem; }
+  .tabs { padding: 0 1rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Investment Planner</h1>
+  <p>London job search runway · 65% S&P 500 / 30% High Growth PIE / 5% Gold · ~9.7% blended return</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('inv',this)">Investing</button>
+  <button class="tab" onclick="sw('liq',this)">What to invest</button>
+</div>
+
+<div class="content">
+
+<!-- INVESTING TAB -->
+<div id="v-inv" class="view active">
+  <div style="height:1rem"></div>
+  <div class="ctrl-bar">
+    <div class="cg"><div class="cl">Monthly amount</div>
+      <div class="sr">
+        <input type="range" min="0" max="300" step="25" value="100" id="amt" oninput="ri()">
+        <span class="sv" id="amtv">£100</span>
+      </div>
+    </div>
+    <div class="cg"><div class="cl">Time horizon</div>
+      <select id="yrs" onchange="ri()">
+        <option value="1">1 year</option>
+        <option value="2">2 years</option>
+        <option value="5" selected>5 years</option>
+        <option value="10">10 years</option>
+        <option value="20">20 years</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sh">Your portfolio allocation</div>
+  <div class="alloc-bar">
+    <div style="width:65%;background:#1A4A7A;height:100%"></div>
+    <div style="width:30%;background:#1A7A5E;height:100%"></div>
+    <div style="width:5%;background:#9B6010;height:100%"></div>
+  </div>
+  <div class="leg">
+    <div class="leg-item"><div class="leg-dot" style="background:#1A4A7A"></div>65% S&P 500 (~9%/yr avg)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#1A7A5E"></div>30% High Growth PIE (~11%/yr, volatile)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#9B6010"></div>5% Gold (~6%/yr)</div>
+  </div>
+  <p class="chart-note">Blended expected return: ~9.7%/yr. Historical averages — not guaranteed. Figures pre-tax. High Growth PIE can fall 40–50% in downturns.</p>
+
+  <div class="cards" id="inv-cards"></div>
+
+  <div class="sh">Growth over time — £50 vs £100 vs £150/mo</div>
+  <div class="chart-wrap"><canvas id="invChart"></canvas></div>
+  <p class="chart-note" id="inv-note"></p>
+
+  <div class="sh">Impact on cash runway</div>
+  <div class="impact-box">
+    <div class="impact-row"><span class="ir-l">£50/mo invested</span><span class="ir-r">~1 day of runway lost per month</span></div>
+    <div class="impact-row"><span class="ir-l">£100/mo invested</span><span class="ir-r warn">~2 days of runway lost per month</span></div>
+    <div class="impact-row"><span class="ir-l">£150/mo invested</span><span class="ir-r warn">~3 days of runway lost per month</span></div>
+    <div class="impact-row" style="background:var(--green-bg)"><span class="ir-l" style="font-weight:600">Verdict at your spend level (£1,389/mo)</span><span class="ir-r pos">All three are negligible — habit beats amount</span></div>
+  </div>
+
+  <div class="ibox">
+    <h4>Why compound growth matters more than the amount</h4>
+    <p>At £100/mo for 10 years at 9.7%/yr, you contribute £12,000 but end up with roughly £20,000 — that's £8,000 in pure investment gain. At 20 years, contributions of £24,000 grow to ~£72,000. Time in the market, not the monthly amount, is the biggest variable. Starting now with £100 beats starting in 2 years with £200.</p>
+  </div>
+</div>
+
+<!-- WHAT TO INVEST TAB -->
+<div id="v-liq" class="view">
+  <div style="height:1rem"></div>
+  <div class="ibox">
+    <h4>How to identify "money I genuinely won't need"</h4>
+    <p>The question isn't really about your total savings — it's about layering your money so each pot has a clear purpose, risk level, and appropriate home. Only the bottom layer belongs in your S&P / PIE / Gold portfolio.</p>
+  </div>
+
+  <div class="sh">Your four money layers</div>
+  <div class="layers">
+    <div class="layer" style="background:var(--red-bg);border-left:4px solid var(--red)">
+      <div class="lt">🔴 Layer 1 — Emergency buffer · ~£3,500 · DO NOT invest</div>
+      <div class="ld">3 months of fixed costs (£790 × 3 = £2,370, rounded up). Sits in an easy-access savings account — Marcus or Chase UK currently pay ~4.5% AER. This money is entirely off-limits. It covers the worst case: job search stalls and income stops at exactly the same time. Without this, a bad month forces you to sell investments at potentially the worst moment.</div>
+    </div>
+    <div class="layer" style="background:var(--amber-bg);border-left:4px solid var(--amber)">
+      <div class="lt">🟡 Layer 2 — Runway reserve · ~£5,500 · DO NOT invest</div>
+      <div class="ld">Your active job-search buffer — covers 6–9 months of burn after June 2026 (when part-time income stops). Keep in cash or a short notice account. It must be accessible within weeks, not locked into markets that could be down 30% exactly when you need to withdraw. This is the layer that lets you focus fully on finding the right role without financial panic.</div>
+    </div>
+    <div class="layer" style="background:var(--green-bg);border-left:4px solid var(--green)">
+      <div class="lt">🟢 Layer 3 — Genuinely investable · ~£2,500 lump sum + £100/mo ongoing</div>
+      <div class="ld">What remains after Layers 1 & 2. Money you can leave completely untouched for 5+ years. This is where your S&P 500 / High Growth PIE / Gold allocation lives. Open a Stocks & Shares ISA — any gains inside are 100% tax-free up to £20k/yr. Best platforms for your allocation: Vanguard (lowest fees for S&P 500), Trading 212 (PIE investing, zero commission, fractional shares).</div>
+    </div>
+    <div class="layer" style="background:var(--purple-bg);border-left:4px solid var(--purple)">
+      <div class="lt">🟣 Layer 4 — Company equity · £4,931 est. · Treat as a windfall</div>
+      <div class="ld">Don't plan around it. If it materialises, it becomes a lump-sum addition to Layer 3 — or a one-off runway extension. Keeping it out of your monthly calculations avoids false confidence and ensures your other decisions remain grounded in what you can actually access today.</div>
+    </div>
+  </div>
+
+  <div class="sh">Your £11,643 mapped to layers</div>
+  <div class="sum-box">
+    <div class="sum-row"><span class="sr-l">Total savings (excl. equity)</span><span class="sr-r">£11,643</span></div>
+    <div class="sum-row"><span class="sr-l">Layer 1 — Emergency buffer</span><span class="sr-r neg">− £3,500</span></div>
+    <div class="sum-row"><span class="sr-l">Layer 2 — Runway reserve</span><span class="sr-r warn">− £5,500</span></div>
+    <div class="sum-row total"><span class="sr-l" style="font-weight:600">Layer 3 — Genuinely investable now</span><span class="sr-r pos" style="font-size:17px">≈ £2,643</span></div>
+    <div class="sum-row" style="background:var(--green-bg)"><span class="sr-l">+ Monthly contributions going forward</span><span class="sr-r pos">£100/mo</span></div>
+  </div>
+
+  <div class="ibox" style="border-left-color:var(--green)">
+    <h4>Practical answers</h4>
+    <p><strong>Is £100/mo right?</strong> Yes — well-calibrated for your situation. At current burn, it costs roughly 2 days of runway per month. The consistency of the habit matters far more than optimising between £50 and £150 right now.</p>
+    <p><strong>Where to open?</strong> A Stocks & Shares ISA is the single most important structural decision. Gains are entirely tax-free within the £20k annual allowance. Vanguard is best for low-cost S&P 500 index exposure. Trading 212 supports PIE (Pie Investing Experience) with zero commission and fractional shares — suits your allocation well.</p>
+    <p><strong>Watch-out on existing savings:</strong> Your crypto and non-cash investments (part of the £11,643) may already be in Layer 3 territory. If so, you could already have £2,000–2,500 invested — in which case, the £100/mo is just building on an existing position, which is exactly the right approach.</p>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+const BLEND = 0.097;
+let ivCh = null;
+
+function sw(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('v-' + id).style.display = 'block';
+  btn.classList.add('active');
+}
+
+function grow(a, m) {
+  const r = Math.pow(1 + BLEND, 1/12) - 1;
+  let p = 0;
+  for (let i = 0; i < m; i++) p = (p + a) * (1 + r);
+  return Math.round(p);
+}
+
+function ri() {
+  const amt = +document.getElementById('amt').value;
+  const yrs = +document.getElementById('yrs').value;
+  document.getElementById('amtv').textContent = '£' + amt;
+  const mos = yrs * 12, inv = amt * mos, fin = grow(amt, mos), gain = fin - inv;
+
+  document.getElementById('inv-cards').innerHTML = `
+    <div class="card"><div class="ct">Total contributed (${yrs}yr)</div><div class="cb">£${inv.toLocaleString()}</div><div class="cs">£${amt}/mo × ${mos} months</div></div>
+    <div class="card"><div class="ct">Portfolio value (est.)</div><div class="cb pos">£${fin.toLocaleString()}</div><div class="cs">~9.7% blended annual return</div></div>
+    <div class="card"><div class="ct">Investment gain</div><div class="cb pos">+£${gain.toLocaleString()}</div><div class="cs">${Math.round(gain / Math.max(inv,1) * 100)}% return on contributions</div></div>
+    <div class="card"><div class="ct">Runway cost vs £0/mo</div><div class="cb warn">~${Math.round(amt / 1389 * 30)} days/mo</div><div class="cs">negligible at current spend</div></div>
+  `;
+
+  const labels = Array.from({length: mos + 1}, (_, i) => {
+    if (i === 0) return 'Now';
+    if (i % 12 === 0) return 'Yr ' + (i / 12);
+    return '';
+  });
+
+  const mk = a => {
+    const r = Math.pow(1 + BLEND, 1/12) - 1;
+    let p = 0; const v = [0];
+    for (let i = 0; i < mos; i++) { p = (p + a) * (1 + r); v.push(Math.round(p)); }
+    return v;
+  };
+  const mc = a => Array.from({length: mos + 1}, (_, i) => a * i);
+
+  if (ivCh) ivCh.destroy();
+  ivCh = new Chart(document.getElementById('invChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {label:'£150/mo growth', data: mk(150), borderColor:'#1A4A7A', borderWidth:2.5, pointRadius:0, tension:0.4, fill:false},
+        {label:'£100/mo growth', data: mk(100), borderColor:'#1A7A5E', borderWidth:2.5, pointRadius:0, tension:0.4, fill:false},
+        {label:'£50/mo growth',  data: mk(50),  borderColor:'#9B6010', borderWidth:2.5, pointRadius:0, tension:0.4, fill:false},
+        {label:'£100 contributed (no return)', data: mc(100), borderColor:'#1A7A5E', borderWidth:1, borderDash:[5,4], pointRadius:0, tension:0, fill:false}
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {labels: {font: {size: 12, family: 'DM Sans'}, boxWidth: 14, padding: 16}},
+        tooltip: {callbacks: {label: c => c.dataset.label + ': £' + Math.round(c.raw).toLocaleString()}}
+      },
+      scales: {
+        x: {ticks: {font: {size: 11}, color: '#6B6760', maxRotation: 0}, grid: {display: false}},
+        y: {ticks: {font: {size: 11}, color: '#6B6760', callback: v => v >= 1000 ? '£' + (v/1000).toFixed(0) + 'k' : '£' + v}, grid: {color: 'rgba(0,0,0,0.06)'}}
+      }
+    }
+  });
+
+  document.getElementById('inv-note').textContent =
+    `At ${yrs} year${yrs > 1 ? 's' : ''}: £50/mo → £${grow(50,mos).toLocaleString()} · £100/mo → £${grow(100,mos).toLocaleString()} · £150/mo → £${grow(150,mos).toLocaleString()}. Dashed line shows £100/mo with 0% return for comparison.`;
+}
+
+ri();
+</script>
+</body>
+</html>
