@@ -42,6 +42,34 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 .view.active { display: block; }
 .view-placeholder { background: var(--bg3); border: 1px dashed var(--border); border-radius: var(--radius); padding: 2rem; color: var(--muted); font-size: 13px; }
 
+/* Setup view */
+.sh { font-family: 'DM Serif Display', serif; font-size: 17px; font-weight: 400; margin-bottom: 0.85rem; margin-top: 1.75rem; }
+.sh:first-child { margin-top: 0; }
+.field-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; padding: 1rem 1.25rem; background: var(--bg2); border-radius: var(--radius); border: 1px solid var(--border); }
+.cg { display: flex; flex-direction: column; gap: 5px; }
+.cl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 0.6rem; line-height: 1.5; }
+select, input[type=number], input[type=month], input[type=text] { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
+select { min-width: 200px; }
+input[type=number] { width: 130px; }
+input[type=month] { width: 150px; }
+input[type=text] { width: 100%; }
+.checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); padding-bottom: 7px; }
+
+.preset-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
+.btn { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); cursor: pointer; }
+.btn:hover { background: var(--bg2); }
+.btn.active { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.btn-ghost { background: none; border: 1px dashed var(--border); color: var(--muted); }
+.btn-ghost:hover { background: var(--bg2); color: var(--text); }
+.btn-remove { background: none; border: none; color: var(--red); font-size: 12px; cursor: pointer; padding: 4px 6px; }
+.btn-remove:hover { text-decoration: underline; }
+
+.period-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 0.75rem; }
+.period-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; }
+.period-row .cg.grow { flex: 1 1 160px; }
+.period-empty { font-size: 13px; color: var(--muted); padding: 0.75rem 0; }
+
 /* Footer */
 .footer { padding: 1.25rem 2rem 2rem; max-width: 940px; }
 .disclaimer { font-size: 12px; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 1rem; }
@@ -75,7 +103,47 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
 <div class="content">
   <div class="view" id="view-setup" role="tabpanel" aria-labelledby="tab-setup">
-    <div class="view-placeholder" id="placeholder-setup"></div>
+
+    <div class="sh" id="setup-heading-basics"></div>
+    <div class="field-bar">
+      <div class="cg">
+        <div class="cl" id="label-currency"></div>
+        <select id="input-currency"></select>
+      </div>
+      <div class="cg">
+        <div class="cl" id="label-savings"></div>
+        <input type="number" id="input-savings" min="0" step="1">
+      </div>
+      <div class="cg">
+        <div class="cl" id="label-monthly-spend"></div>
+        <input type="number" id="input-monthly-spend" min="0" step="1">
+      </div>
+      <div class="cg">
+        <div class="cl" id="label-fixed-costs"></div>
+        <input type="number" id="input-fixed-costs" min="0" step="1">
+      </div>
+    </div>
+    <p class="hint" id="hint-fixed-costs"></p>
+    <p class="hint" id="hint-currency"></p>
+
+    <div class="sh" id="setup-heading-income"></div>
+    <p class="hint" id="hint-income" style="margin-top:0;margin-bottom:0.85rem;"></p>
+    <div class="preset-row" id="income-presets"></div>
+    <div class="period-list" id="income-periods"></div>
+    <button type="button" class="btn btn-ghost" id="btn-add-period"></button>
+
+    <div class="sh" id="setup-heading-visa"></div>
+    <div class="field-bar">
+      <div class="cg">
+        <div class="cl" id="label-visa"></div>
+        <input type="month" id="input-visa">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="input-no-visa">
+        <label for="input-no-visa" id="label-no-visa"></label>
+      </div>
+    </div>
+
   </div>
   <div class="view" id="view-runway" role="tabpanel" aria-labelledby="tab-runway">
     <div class="view-placeholder" id="placeholder-runway"></div>
@@ -103,12 +171,48 @@ const STRINGS = {
   tabSetup: 'Setup',
   tabRunway: 'Runway',
   tabPlan: 'Plan',
-  placeholderSetup: 'Setup inputs go here: currency, savings, monthly spend, fixed costs, income, visa expiry.',
   placeholderRunway: 'Cash flow chart, month-by-month table, income periods, and one-off expenses go here.',
   placeholderPlan: 'Buffer / reserve / investable layer breakdown and portfolio projection go here.',
   disclaimer: '<strong>Not financial advice.</strong> This tool is for personal, informative use only. Return figures are illustrative estimates based on historical averages and are not guaranteed.',
-  privacyNote: 'Your data never leaves this browser — everything is stored locally and nothing is sent to a server.'
+  privacyNote: 'Your data never leaves this browser — everything is stored locally and nothing is sent to a server.',
+
+  // Setup view
+  setupHeadingBasics: 'The basics',
+  labelCurrency: 'Currency',
+  labelSavings: 'Total savings',
+  labelMonthlySpend: 'Monthly spend',
+  labelFixedCosts: 'Fixed monthly costs',
+  hintFixedCosts: 'Rent, subscriptions, anything that doesn’t flex month to month. Sizes your emergency buffer (buffer = emergency months × fixed costs — adjust the multiplier in the Plan tab).',
+  hintCurrency: 'Display only for now — v1 doesn’t convert between currencies.',
+  setupHeadingIncome: 'Income',
+  hintIncome: 'Pick a starting point, then edit the periods below. Overlapping periods add together; leave an end date blank for ongoing income.',
+  presetNone: 'No income',
+  presetOngoing: 'One ongoing income',
+  presetTemporary: 'Temporary, then stops',
+  presetTemporaryPermanent: 'Temporary, then permanent',
+  btnAddPeriod: '+ Add income period',
+  periodEmpty: 'No income periods yet — pick a starting point above or add one manually.',
+  periodLabelPlaceholder: 'Label (e.g. Part-time contract)',
+  periodAmountLabel: 'Monthly amount',
+  periodFromLabel: 'From',
+  periodToLabel: 'To',
+  periodOngoing: 'Ongoing',
+  periodRemove: 'Remove',
+  setupHeadingVisa: 'Visa / deadline',
+  labelVisa: 'Visa expiry',
+  labelNoVisa: 'No visa deadline'
 };
+
+// Currency options — display/labelling only; no live conversion in v1 (PRD Non-Goals).
+const CURRENCIES = [
+  { code: 'GBP', symbol: '£', label: 'GBP — British Pound' },
+  { code: 'USD', symbol: '$', label: 'USD — US Dollar' },
+  { code: 'EUR', symbol: '€', label: 'EUR — Euro' },
+  { code: 'TWD', symbol: 'NT$', label: 'TWD — Taiwan Dollar' },
+  { code: 'AUD', symbol: 'A$', label: 'AUD — Australian Dollar' },
+  { code: 'CAD', symbol: 'C$', label: 'CAD — Canadian Dollar' },
+  { code: 'NZD', symbol: 'NZ$', label: 'NZD — New Zealand Dollar' }
+];
 
 // ---------------------------------------------------------------------------
 // State model — exact shape defined in docs/architecture.md. Binding contract.
@@ -219,11 +323,37 @@ function renderStrings() {
   document.getElementById('tab-setup').textContent = STRINGS.tabSetup;
   document.getElementById('tab-runway').textContent = STRINGS.tabRunway;
   document.getElementById('tab-plan').textContent = STRINGS.tabPlan;
-  document.getElementById('placeholder-setup').textContent = STRINGS.placeholderSetup;
   document.getElementById('placeholder-runway').textContent = STRINGS.placeholderRunway;
   document.getElementById('placeholder-plan').textContent = STRINGS.placeholderPlan;
   document.getElementById('footer-disclaimer').innerHTML = STRINGS.disclaimer;
   document.getElementById('footer-privacy').textContent = STRINGS.privacyNote;
+
+  document.getElementById('setup-heading-basics').textContent = STRINGS.setupHeadingBasics;
+  document.getElementById('label-currency').textContent = STRINGS.labelCurrency;
+  document.getElementById('label-savings').textContent = STRINGS.labelSavings;
+  document.getElementById('label-monthly-spend').textContent = STRINGS.labelMonthlySpend;
+  document.getElementById('label-fixed-costs').textContent = STRINGS.labelFixedCosts;
+  document.getElementById('hint-fixed-costs').textContent = STRINGS.hintFixedCosts;
+  document.getElementById('hint-currency').textContent = STRINGS.hintCurrency;
+  document.getElementById('setup-heading-income').textContent = STRINGS.setupHeadingIncome;
+  document.getElementById('hint-income').textContent = STRINGS.hintIncome;
+  document.getElementById('btn-add-period').textContent = STRINGS.btnAddPeriod;
+  document.getElementById('setup-heading-visa').textContent = STRINGS.setupHeadingVisa;
+  document.getElementById('label-visa').textContent = STRINGS.labelVisa;
+  document.getElementById('label-no-visa').textContent = STRINGS.labelNoVisa;
+
+  const currencySelect = document.getElementById('input-currency');
+  currencySelect.innerHTML = CURRENCIES.map(c => `<option value="${c.code}">${c.label}</option>`).join('');
+
+  const presets = [
+    { id: 'none', label: STRINGS.presetNone },
+    { id: 'ongoing', label: STRINGS.presetOngoing },
+    { id: 'temporary', label: STRINGS.presetTemporary },
+    { id: 'temporaryPermanent', label: STRINGS.presetTemporaryPermanent }
+  ];
+  document.getElementById('income-presets').innerHTML = presets.map(p =>
+    `<button type="button" class="btn" data-preset="${p.id}">${p.label}</button>`
+  ).join('');
 }
 
 function setActiveTab(name) {
@@ -233,6 +363,7 @@ function setActiveTab(name) {
   document.querySelectorAll('.view').forEach(view => {
     view.classList.toggle('active', view.id === 'view-' + name);
   });
+  if (name === 'setup') renderSetupView();
 }
 
 function initTabs() {
@@ -245,8 +376,191 @@ function initTabs() {
   setActiveTab(isReturningUser ? 'runway' : 'setup');
 }
 
+// ---------------------------------------------------------------------------
+// Setup view
+// ---------------------------------------------------------------------------
+function genId() {
+  return (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2)).slice(0, 8);
+}
+
+function addMonths(yyyyMm, delta) {
+  const [y, m] = yyyyMm.split('-').map(Number);
+  const total = (y * 12 + (m - 1)) + delta;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12) + 1;
+  return ny + '-' + String(nm).padStart(2, '0');
+}
+
+function clampNumber(value) {
+  const n = parseFloat(value);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+// Presets generate a periods array from the user's current start month; the
+// result remains fully editable below (docs/architecture.md field notes).
+const INCOME_PRESET_GENERATORS = {
+  none: () => [],
+  ongoing: (state) => [
+    { id: genId(), label: 'Income', monthlyAmount: 0, from: state.profile.startMonth, to: null }
+  ],
+  temporary: (state) => [
+    { id: genId(), label: 'Temporary income', monthlyAmount: 0, from: state.profile.startMonth, to: addMonths(state.profile.startMonth, 6) }
+  ],
+  temporaryPermanent: (state) => [
+    { id: genId(), label: 'Temporary income', monthlyAmount: 0, from: state.profile.startMonth, to: addMonths(state.profile.startMonth, 6) },
+    { id: genId(), label: 'Ongoing income', monthlyAmount: 0, from: addMonths(state.profile.startMonth, 6), to: null }
+  ]
+};
+
+function renderIncomePeriods() {
+  const container = document.getElementById('income-periods');
+  const periods = appState.income.periods;
+
+  document.querySelectorAll('#income-presets .btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === appState.income.activePreset);
+  });
+
+  if (periods.length === 0) {
+    container.innerHTML = `<p class="period-empty">${STRINGS.periodEmpty}</p>`;
+    return;
+  }
+
+  container.innerHTML = periods.map(p => `
+    <div class="period-row" data-period-id="${p.id}">
+      <div class="cg grow">
+        <div class="cl">${STRINGS.periodLabelPlaceholder}</div>
+        <input type="text" data-field="label" value="${(p.label || '').replace(/"/g, '&quot;')}" placeholder="${STRINGS.periodLabelPlaceholder}">
+      </div>
+      <div class="cg">
+        <div class="cl">${STRINGS.periodAmountLabel}</div>
+        <input type="number" min="0" step="1" data-field="monthlyAmount" value="${p.monthlyAmount}">
+      </div>
+      <div class="cg">
+        <div class="cl">${STRINGS.periodFromLabel}</div>
+        <input type="month" data-field="from" value="${p.from}">
+      </div>
+      <div class="cg">
+        <div class="cl">${STRINGS.periodToLabel}</div>
+        <input type="month" data-field="to" value="${p.to || ''}" ${p.to === null ? 'disabled' : ''}>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" data-field="ongoing" ${p.to === null ? 'checked' : ''}>
+        <label>${STRINGS.periodOngoing}</label>
+      </div>
+      <button type="button" class="btn-remove" data-action="remove">${STRINGS.periodRemove}</button>
+    </div>
+  `).join('');
+}
+
+function renderSetupView() {
+  document.getElementById('input-currency').value = appState.profile.currency;
+  document.getElementById('input-savings').value = appState.profile.savings;
+  document.getElementById('input-monthly-spend').value = appState.profile.monthlySpend;
+  document.getElementById('input-fixed-costs').value = appState.profile.fixedMonthlyCosts;
+
+  const visaInput = document.getElementById('input-visa');
+  const noVisaCheckbox = document.getElementById('input-no-visa');
+  const hasVisa = appState.profile.visaExpiry !== null;
+  noVisaCheckbox.checked = !hasVisa;
+  visaInput.disabled = !hasVisa;
+  visaInput.value = hasVisa ? appState.profile.visaExpiry : '';
+
+  renderIncomePeriods();
+}
+
+function wireSetupEvents() {
+  document.getElementById('input-currency').addEventListener('change', (e) => {
+    appState.profile.currency = e.target.value;
+    saveState(appState);
+  });
+  document.getElementById('input-savings').addEventListener('input', (e) => {
+    appState.profile.savings = clampNumber(e.target.value);
+    saveState(appState);
+  });
+  document.getElementById('input-monthly-spend').addEventListener('input', (e) => {
+    appState.profile.monthlySpend = clampNumber(e.target.value);
+    saveState(appState);
+  });
+  document.getElementById('input-fixed-costs').addEventListener('input', (e) => {
+    appState.profile.fixedMonthlyCosts = clampNumber(e.target.value);
+    saveState(appState);
+  });
+
+  document.getElementById('input-visa').addEventListener('change', (e) => {
+    appState.profile.visaExpiry = e.target.value || null;
+    saveState(appState);
+  });
+  document.getElementById('input-no-visa').addEventListener('change', (e) => {
+    const visaInput = document.getElementById('input-visa');
+    if (e.target.checked) {
+      appState.profile.visaExpiry = null;
+      visaInput.value = '';
+      visaInput.disabled = true;
+    } else {
+      visaInput.disabled = false;
+      appState.profile.visaExpiry = visaInput.value || appState.profile.startMonth;
+      visaInput.value = appState.profile.visaExpiry;
+    }
+    saveState(appState);
+  });
+
+  document.getElementById('income-presets').addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn[data-preset]');
+    if (!btn) return;
+    const presetId = btn.dataset.preset;
+    appState.income.activePreset = presetId;
+    appState.income.periods = INCOME_PRESET_GENERATORS[presetId](appState);
+    saveState(appState);
+    renderIncomePeriods();
+  });
+
+  document.getElementById('btn-add-period').addEventListener('click', () => {
+    appState.income.activePreset = 'custom';
+    appState.income.periods.push({
+      id: genId(), label: '', monthlyAmount: 0, from: appState.profile.startMonth, to: null
+    });
+    saveState(appState);
+    renderIncomePeriods();
+  });
+
+  const periodsContainer = document.getElementById('income-periods');
+  periodsContainer.addEventListener('input', (e) => {
+    const row = e.target.closest('.period-row');
+    if (!row) return;
+    const period = appState.income.periods.find(p => p.id === row.dataset.periodId);
+    if (!period) return;
+    const field = e.target.dataset.field;
+    if (field === 'label') period.label = e.target.value;
+    if (field === 'monthlyAmount') period.monthlyAmount = clampNumber(e.target.value);
+    if (field === 'from') period.from = e.target.value;
+    if (field === 'to') period.to = e.target.value || null;
+    appState.income.activePreset = 'custom';
+    saveState(appState);
+  });
+  periodsContainer.addEventListener('change', (e) => {
+    if (e.target.dataset.field !== 'ongoing') return;
+    const row = e.target.closest('.period-row');
+    const period = appState.income.periods.find(p => p.id === row.dataset.periodId);
+    if (!period) return;
+    period.to = e.target.checked ? null : appState.profile.startMonth;
+    appState.income.activePreset = 'custom';
+    saveState(appState);
+    renderIncomePeriods();
+  });
+  periodsContainer.addEventListener('click', (e) => {
+    if (e.target.dataset.action !== 'remove') return;
+    const row = e.target.closest('.period-row');
+    appState.income.periods = appState.income.periods.filter(p => p.id !== row.dataset.periodId);
+    appState.income.activePreset = 'custom';
+    saveState(appState);
+    renderIncomePeriods();
+  });
+}
+
 renderStrings();
 initTabs();
+wireSetupEvents();
+renderSetupView();
 </script>
 </body>
 </html>
