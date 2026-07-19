@@ -14,6 +14,35 @@ A running log of how this project is built in collaboration with Claude. Raw mat
 
 **This commit.** The two original HTML files, unmodified, as the honest "before" state.
 
+## Entry 2 — Designing the data model before touching the code (July 2026)
+
+**What I was trying to do.** Complete Phase 0.3–0.4: the information
+architecture of the merged app, and the single state JSON everything
+reads from.
+
+**What I asked Claude.** To propose the IA and state shape based on the
+PRD and the two prototypes.
+
+**What came back.** Three views (Setup / Runway / Plan) over one shared
+state object with localStorage auto-save; a persistent header showing
+effective runway and which constraint binds (cash vs visa). The biggest
+structural change from the prototypes: replacing my hardcoded income
+scenario dropdown with a generic array of income periods, with the old
+scenarios becoming editable presets. Also: a schemaVersion field for
+future localStorage migrations, and fixed costs as a separate input so
+the emergency buffer formula (3 × fixed costs) works for any user.
+
+**What I decided.** Confirmed all three proposals: income modelled as
+editable periods with the old scenarios as presets; fixed monthly costs
+as a seventh input defaulting to 60% of spend; and the v1 reserve
+simplification (reserveMonths × monthlySpend, ignoring expected income
+during the search — conservative, refine later).
+
+**What I learned.** The state JSON is a contract, not just storage — the
+same object gets persisted to localStorage in Phase 1 and sent to the
+Claude API in Phase 3. Designing it once, upfront, is what makes both of
+those cheap later.
+
 <!-- Template for future entries:
 
 ## Entry N — <title> (<date>)
