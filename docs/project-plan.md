@@ -12,13 +12,11 @@ Decisions and setup before writing product code.
 
 | Step | Task | Output |
 |---|---|---|
-| 0.1 | ~~Decide the open questions that block build~~ **Done (PRD §8):** English-only v1 (strings centralised for later zh-TW); allocation hardcoded; layer rules adjustable; disclaimer required for launch | Decisions recorded in PRD v0.2 |
-| 0.2 | Create a GitHub repository; commit the two existing HTML files as the "before" state | Repo with initial commit — this becomes case-study evidence |
-| 0.3 | Sketch the merged information architecture: onboarding → shared data model → View 1 (Runway) / View 2 (Invest & Spend) | One-page IA sketch (Claude Design or paper) |
-| 0.4 | Define the data model as a single JSON shape (savings, spend, income scenarios, deadlines, one-off expenses, invest amount, currency) | `state` schema written down — this is the contract everything else builds on |
-| 0.5 | Start the case-study log: a running `CASE-STUDY.md` in the repo | Log file with entry #1: the starting point |
-
-**Why 0.4 matters:** a clean serialisable data model is what makes Phase 3 (Claude reads/writes your scenario) cheap later, and localStorage persistence trivial now.
+| 0.1 | ~~Decide the open questions that block build~~ English-only v1 (strings centralised for later zh-TW); allocation hardcoded; layer rules adjustable; disclaimer required for launch | Decisions recorded in PRD v0.2 |
+| 0.2 | ~~Create a GitHub repository; commit the two existing HTML files as the "before" state~~ | Repo with initial commit — this becomes case-study evidence |
+| 0.3 | ~~Sketch the merged information architecture: onboarding → shared data model → View 1 (Runway) / View 2 (Invest & Spend)~~ | One-page IA sketch (Claude Design or paper) |
+| 0.4 | ~~Define the data model as a single JSON shape (savings, spend, income scenarios, deadlines, one-off expenses, invest amount, currency)~~ | `state` schema written down — this is the contract everything else builds on |
+| 0.5 | ~~Start the case-study log: a running `CASE-STUDY.md` in the repo~~ | Log file with entry #1: the starting point |
 
 ---
 
