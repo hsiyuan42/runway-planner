@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Runway Planner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #F7F5F0; --bg2: #EDEAE3; --bg3: #fff;
+  --border: #D8D4CB; --text: #1A1814; --muted: #6B6760;
+  --green: #1A7A5E; --green-bg: #E6F2EE;
+  --amber: #9B6010; --amber-bg: #FDF2E0;
+  --red: #B83A2A; --red-bg: #FAEAE7;
+  --blue: #1A4A7A; --blue-bg: #E6EDF7;
+  --teal: #0E7490; --teal-bg: #E0F5F9;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+/* Persistent header */
+.header { padding: 1.75rem 2rem 1.1rem; border-bottom: 1px solid var(--border); background: var(--bg3); }
+.header h1 { font-family: 'DM Serif Display', serif; font-size: 22px; font-weight: 400; margin-bottom: 4px; }
+.header p { font-size: 13px; color: var(--muted); }
+
+.headline { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 0.9rem; }
+.headline .hv { font-size: 19px; font-weight: 500; }
+.headline .hc { font-size: 13px; color: var(--muted); }
+.headline .tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--bg2); border: 1px solid var(--border); border-radius: 99px; padding: 2px 8px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; padding: 0 2rem; background: var(--bg3); border-bottom: 1px solid var(--border); }
+.tab { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; padding: 0.85rem 0.9rem; cursor: pointer; }
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--green); }
+
+.content { padding: 1.5rem 2rem; max-width: 940px; }
+.view { display: none; }
+.view.active { display: block; }
+.view-placeholder { background: var(--bg3); border: 1px dashed var(--border); border-radius: var(--radius); padding: 2rem; color: var(--muted); font-size: 13px; }
+
+/* Footer */
+.footer { padding: 1.25rem 2rem 2rem; max-width: 940px; }
+.disclaimer { font-size: 12px; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 1rem; }
+.disclaimer strong { color: var(--text); }
+.privacy-note { font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
+
+@media (max-width: 600px) {
+  .content, .footer { padding-left: 1rem; padding-right: 1rem; }
+  .header { padding: 1.25rem 1rem 1rem; }
+  .tabs { padding: 0 1rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="app-title"></h1>
+  <p id="app-subtitle"></p>
+  <div class="headline">
+    <span class="hv" id="headline-runway"></span>
+    <span class="hc" id="headline-constraint"></span>
+    <span class="tag" id="headline-tag"></span>
+  </div>
+</div>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button class="tab" role="tab" data-view="setup" id="tab-setup"></button>
+  <button class="tab" role="tab" data-view="runway" id="tab-runway"></button>
+  <button class="tab" role="tab" data-view="plan" id="tab-plan"></button>
+</div>
+
+<div class="content">
+  <div class="view" id="view-setup" role="tabpanel" aria-labelledby="tab-setup">
+    <div class="view-placeholder" id="placeholder-setup"></div>
+  </div>
+  <div class="view" id="view-runway" role="tabpanel" aria-labelledby="tab-runway">
+    <div class="view-placeholder" id="placeholder-runway"></div>
+  </div>
+  <div class="view" id="view-plan" role="tabpanel" aria-labelledby="tab-plan">
+    <div class="view-placeholder" id="placeholder-plan"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <p class="disclaimer" id="footer-disclaimer"></p>
+  <p class="privacy-note" id="footer-privacy"></p>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Strings (centralised for future localisation — PRD §8, docs/PRD.md P2)
+// ---------------------------------------------------------------------------
+const STRINGS = {
+  appTitle: 'Runway Planner',
+  appSubtitle: 'How long your money lasts, and what you can safely spend or invest.',
+  headlineTagPlaceholder: 'preview',
+  headlineRunwayPlaceholder: 'Cash runs out Mar 2027',
+  headlineConstraintPlaceholder: 'Visa is the limit: Apr 2027',
+  tabSetup: 'Setup',
+  tabRunway: 'Runway',
+  tabPlan: 'Plan',
+  placeholderSetup: 'Setup inputs go here: currency, savings, monthly spend, fixed costs, income, visa expiry.',
+  placeholderRunway: 'Cash flow chart, month-by-month table, income periods, and one-off expenses go here.',
+  placeholderPlan: 'Buffer / reserve / investable layer breakdown and portfolio projection go here.',
+  disclaimer: '<strong>Not financial advice.</strong> This tool is for personal, informative use only. Return figures are illustrative estimates based on historical averages and are not guaranteed.',
+  privacyNote: 'Your data never leaves this browser — everything is stored locally and nothing is sent to a server.'
+};
+
+// ---------------------------------------------------------------------------
+// State model — exact shape defined in docs/architecture.md. Binding contract.
+// ---------------------------------------------------------------------------
+const SCHEMA_VERSION = 1;
+const STORAGE_KEY = 'runway-planner-state-v1';
+
+function currentYearMonth() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function defaultState() {
+  const monthlySpend = 1400;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    profile: {
+      currency: 'GBP',
+      startMonth: currentYearMonth(),
+      savings: 10000,
+      monthlySpend: monthlySpend,
+      fixedMonthlyCosts: Math.round(monthlySpend * 0.6),
+      visaExpiry: null
+    },
+    income: {
+      activePreset: 'custom',
+      periods: []
+    },
+    oneOffExpenses: [],
+    layerRules: {
+      emergencyMonths: 3,
+      reserveMonths: 6
+    },
+    invest: {
+      monthlyAmount: 0,
+      existingPortfolio: 0
+    },
+    view: {
+      horizonMonths: 18
+    }
+  };
+}
+
+// Migrations run in order when a saved state's schemaVersion is older than
+// SCHEMA_VERSION. Keyed by the version a migration upgrades FROM.
+const MIGRATIONS = {
+  // 1: (state) => { ...state, schemaVersion: 2, ... }
+};
+
+function migrateState(state) {
+  let s = state;
+  while (typeof s.schemaVersion === 'number' && s.schemaVersion < SCHEMA_VERSION && MIGRATIONS[s.schemaVersion]) {
+    s = MIGRATIONS[s.schemaVersion](s);
+  }
+  return s;
+}
+
+function loadState() {
+  let raw;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch (err) {
+    return { state: defaultState(), isReturningUser: false };
+  }
+  if (!raw) return { state: defaultState(), isReturningUser: false };
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.schemaVersion !== 'number') {
+      return { state: defaultState(), isReturningUser: false };
+    }
+    if (parsed.schemaVersion > SCHEMA_VERSION) {
+      // Saved by a newer version of the app than this code understands.
+      console.warn('runway-planner: saved state is a newer schema version, ignoring.');
+      return { state: defaultState(), isReturningUser: false };
+    }
+    return { state: migrateState(parsed), isReturningUser: true };
+  } catch (err) {
+    console.warn('runway-planner: corrupt saved state, falling back to defaults.', err);
+    return { state: defaultState(), isReturningUser: false };
+  }
+}
+
+let saveTimer = null;
+function saveState(state) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.warn('runway-planner: failed to save state.', err);
+    }
+  }, 300);
+}
+
+// ---------------------------------------------------------------------------
+// App init
+// ---------------------------------------------------------------------------
+const { state: appState, isReturningUser } = loadState();
+saveState(appState); // persist defaults/migrations immediately for a first-time visitor
+
+function renderStrings() {
+  document.getElementById('app-title').textContent = STRINGS.appTitle;
+  document.getElementById('app-subtitle').textContent = STRINGS.appSubtitle;
+  document.getElementById('headline-runway').textContent = STRINGS.headlineRunwayPlaceholder;
+  document.getElementById('headline-constraint').textContent = STRINGS.headlineConstraintPlaceholder;
+  document.getElementById('headline-tag').textContent = STRINGS.headlineTagPlaceholder;
+  document.getElementById('tab-setup').textContent = STRINGS.tabSetup;
+  document.getElementById('tab-runway').textContent = STRINGS.tabRunway;
+  document.getElementById('tab-plan').textContent = STRINGS.tabPlan;
+  document.getElementById('placeholder-setup').textContent = STRINGS.placeholderSetup;
+  document.getElementById('placeholder-runway').textContent = STRINGS.placeholderRunway;
+  document.getElementById('placeholder-plan').textContent = STRINGS.placeholderPlan;
+  document.getElementById('footer-disclaimer').innerHTML = STRINGS.disclaimer;
+  document.getElementById('footer-privacy').textContent = STRINGS.privacyNote;
+}
+
+function setActiveTab(name) {
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.setAttribute('aria-selected', String(btn.dataset.view === name));
+  });
+  document.querySelectorAll('.view').forEach(view => {
+    view.classList.toggle('active', view.id === 'view-' + name);
+  });
+}
+
+function initTabs() {
+  document.getElementById('tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab');
+    if (!btn) return;
+    setActiveTab(btn.dataset.view);
+  });
+  // First visit lands on Setup; returning visits (saved state found) land on Runway.
+  setActiveTab(isReturningUser ? 'runway' : 'setup');
+}
+
+renderStrings();
+initTabs();
+</script>
+</body>
+</html>
