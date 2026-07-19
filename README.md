@@ -9,19 +9,15 @@ A personal finance tool for people navigating money in a new country — interna
 
 ## Status
 
-🚧 **Phase 0 — Foundations.** This repo currently contains the two original standalone prototypes as the "before" state:
+🚧 **Phase 1 — Building the interface.** This repo currently contains the progress of development of the interface of this planner, including Setup options, Runway view, and Investment planner.
 
-- `cashflow_runway.html` — cash flow & runway dashboard (income scenarios, one-off travel expense, month-by-month table)
-- `investing_planner.html` — investment planner (compound growth, runway trade-off, money layers)
-
-These were built for the author's own situation and validated through real use. The project generalises them into one merged, configurable app. See `docs/` for the PRD and project plan.
 
 ## Roadmap
 
 | Phase | Goal | Status |
 |---|---|---|
-| 0 | Repo, shared data model, information architecture | 🔨 in progress |
-| 1 | Merge + genericise + deploy static (live URL) | ⬜ |
+| 0 | Repo, shared data model, information architecture | ✅ Done |
+| 1 | Merge + genericise + deploy static (live URL) | 🔨 in progress |
 | 2 | Live currency conversion via serverless API proxy | ⬜ |
 | 3 | AI features via Claude API (plain-language summary, NL scenario input) | ⬜ |
 | 4 | Published case study | 📝 ongoing log in `CASE-STUDY.md` |
